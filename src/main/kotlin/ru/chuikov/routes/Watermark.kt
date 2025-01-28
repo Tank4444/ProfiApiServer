@@ -10,7 +10,7 @@ import ru.chuikov.util.Watermark
 
 fun Route.watermark() {
 
-    get("/watermark") {
+    post("/watermark") {
         val multipartData = call.receiveMultipart()
         var text = ""
         var fileBytes: ByteArray? = null
@@ -26,7 +26,7 @@ fun Route.watermark() {
             }
             part.dispose()
         }
-        if (fileBytes!=null)  Watermark.addTextWatermark(text, fileBytes,)
+
 
     }
 }

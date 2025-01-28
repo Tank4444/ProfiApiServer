@@ -6,5 +6,6 @@ import io.ktor.server.routing.*
 fun Application.configRouting(){
     routing {
         registration()
+        watermark()
     }
 }

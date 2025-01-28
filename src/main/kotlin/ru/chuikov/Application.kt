@@ -12,7 +12,6 @@ import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
-import org.koin.logger.slf4jLogger
 import ru.chuikov.db.configureDatabases
 import io.ktor.server.routing.*
 import ru.chuikov.routes.configRouting
@@ -33,7 +32,6 @@ fun Application.module() {
     }
 
     install(Koin) {
-        slf4jLogger()
         modules(module {
 //            single<HelloService> {
 //                HelloService {

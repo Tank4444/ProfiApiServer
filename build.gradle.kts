@@ -8,6 +8,8 @@ plugins {
     kotlin("jvm") version "2.1.0"
     id("io.ktor.plugin") version "3.0.3"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.0"
+    //graalvm
+    id("org.graalvm.buildtools.native") version "0.9.19"
 }
 
 group = "ru.chuikov"
@@ -50,4 +52,51 @@ dependencies {
     implementation("io.ktor:ktor-server-default-headers")
     implementation("io.ktor:ktor-server-resources")
 
+}
+
+graalvmNative {
+    binaries {
+
+        named("main") {
+            fallback.set(false)
+            verbose.set(true)
+
+            buildArgs.add("--initialize-at-build-time=ch.qos.logback")
+            buildArgs.add("--initialize-at-build-time=io.ktor,kotlin")
+            buildArgs.add("--initialize-at-build-time=org.slf4j.LoggerFactory")
+
+            buildArgs.add("-H:+InstallExitHandlers")
+            buildArgs.add("-H:+ReportUnsupportedElementsAtRuntime")
+            buildArgs.add("-H:+ReportExceptionStackTraces")
+            buildArgs.add("-H:+AddAllFileSystemProviders")
+
+            imageName.set("graalvm-server")
+        }
+
+        named("test"){
+            fallback.set(false)
+            verbose.set(true)
+
+            buildArgs.add("--initialize-at-build-time=ch.qos.logback")
+            buildArgs.add("--initialize-at-build-time=io.ktor,kotlin")
+            buildArgs.add("--initialize-at-build-time=org.slf4j.LoggerFactory")
+
+            buildArgs.add("-H:+InstallExitHandlers")
+            buildArgs.add("-H:+ReportUnsupportedElementsAtRuntime")
+            buildArgs.add("-H:+ReportExceptionStackTraces")
+
+            val path = "${projectDir}/src/test/resources/META-INF/native-image/"
+            buildArgs.add("-H:ReflectionConfigurationFiles=${path}reflect-config.json")
+            buildArgs.add("-H:ResourceConfigurationFiles=${path}resource-config.json")
+
+            imageName.set("graalvm-test-server")
+        }
+    }
+
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
+        testLogging {
+            events("passed", "skipped", "failed")
+        }
+    }
 }
