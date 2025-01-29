@@ -58,45 +58,44 @@ graalvmNative {
     binaries {
 
         named("main") {
+            resources.autodetect()
+
+            javaLauncher.set(javaToolchains.launcherFor {
+                languageVersion.set(JavaLanguageVersion.of(21))
+                vendor.set(JvmVendorSpec.matching("GraalVM Community"))
+            })
+
             fallback.set(false)
             verbose.set(true)
 
-            buildArgs.add("--initialize-at-build-time=ch.qos.logback")
-            buildArgs.add("--initialize-at-build-time=io.ktor,kotlin")
-            buildArgs.add("--initialize-at-build-time=org.slf4j.LoggerFactory")
+            with(buildArgs) {
+                add("--initialize-at-build-time=ch.qos.logback")
+                add("--initialize-at-build-time=io.ktor,kotlin,kotlinx.serialization")
+                add("--initialize-at-build-time=org.slf4j.LoggerFactory")
+                add("--initialize-at-build-time=ch.qos.logback.classic.Logger")
 
-            buildArgs.add("-H:+InstallExitHandlers")
-            buildArgs.add("-H:+ReportUnsupportedElementsAtRuntime")
-            buildArgs.add("-H:+ReportExceptionStackTraces")
-            buildArgs.add("-H:+AddAllFileSystemProviders")
+                add("--initialize-at-run-time=io.netty.handler.ssl.BouncyCastleAlpnSslUtils")
+                add("--initialize-at-run-time=io.netty.channel.epoll.Epoll")
+                add("--initialize-at-run-time=io.netty.channel.epoll.Native")
+                add("--initialize-at-run-time=io.netty.channel.epoll.EpollEventLoop")
+                add("--initialize-at-run-time=io.netty.channel.epoll.EpollEventArray")
+                add("--initialize-at-run-time=io.netty.channel.DefaultFileRegion")
+                add("--initialize-at-run-time=io.netty.channel.kqueue.KQueueEventArray")
+                add("--initialize-at-run-time=io.netty.channel.kqueue.KQueueEventLoop")
+                add("--initialize-at-run-time=io.netty.channel.kqueue.KQueue")
+                add("--initialize-at-run-time=io.netty.channel.kqueue.Native")
+                add("--initialize-at-run-time=io.netty.channel.unix.Errors")
+                add("--initialize-at-run-time=io.netty.channel.unix.IovArray")
+                add("--initialize-at-run-time=io.netty.channel.unix.Limits")
+                add("--initialize-at-run-time=io.netty.util.internal.logging.Log4JLogger")
 
+                add("-H:+UnlockExperimentalVMOptions")
+                add("-H:+InstallExitHandlers")
+                add("-H:+ReportUnsupportedElementsAtRuntime")
+                add("-H:+ReportExceptionStackTraces")
+                add("-H:+BuildOutputColorful")
+            }
             imageName.set("graalvm-server")
-        }
-
-        named("test"){
-            fallback.set(false)
-            verbose.set(true)
-
-            buildArgs.add("--initialize-at-build-time=ch.qos.logback")
-            buildArgs.add("--initialize-at-build-time=io.ktor,kotlin")
-            buildArgs.add("--initialize-at-build-time=org.slf4j.LoggerFactory")
-
-            buildArgs.add("-H:+InstallExitHandlers")
-            buildArgs.add("-H:+ReportUnsupportedElementsAtRuntime")
-            buildArgs.add("-H:+ReportExceptionStackTraces")
-
-            val path = "${projectDir}/src/test/resources/META-INF/native-image/"
-            buildArgs.add("-H:ReflectionConfigurationFiles=${path}reflect-config.json")
-            buildArgs.add("-H:ResourceConfigurationFiles=${path}resource-config.json")
-
-            imageName.set("graalvm-test-server")
-        }
-    }
-
-    tasks.withType<Test>().configureEach {
-        useJUnitPlatform()
-        testLogging {
-            events("passed", "skipped", "failed")
         }
     }
 }
