@@ -8,8 +8,7 @@ plugins {
     kotlin("jvm") version "2.1.0"
     id("io.ktor.plugin") version "3.0.3"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.0"
-    //graalvm
-    id("org.graalvm.buildtools.native") version "0.9.19"
+    id("org.graalvm.buildtools.native") version "0.10.3"
 }
 
 group = "ru.chuikov"
@@ -34,7 +33,6 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")
     implementation("com.h2database:h2:$h2_version")
     implementation("io.insert-koin:koin-ktor:$koin_version")
-    implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
     implementation("io.ktor:ktor-server-swagger")
     implementation("io.ktor:ktor-server-openapi")
     implementation("io.ktor:ktor-server-forwarded-header")
@@ -55,47 +53,34 @@ dependencies {
 }
 
 graalvmNative {
+    toolchainDetection.set(true)
+    metadataRepository {
+        enabled = true
+    }
     binaries {
 
         named("main") {
             resources.autodetect()
-
-            javaLauncher.set(javaToolchains.launcherFor {
-                languageVersion.set(JavaLanguageVersion.of(21))
-                vendor.set(JvmVendorSpec.matching("GraalVM Community"))
-            })
-
             fallback.set(false)
             verbose.set(true)
+            buildArgs.add("--enable-http")
+            buildArgs.add("--initialize-at-build-time=ch.qos.logback")
+            buildArgs.add("--initialize-at-build-time=io.ktor,kotlin")
+            buildArgs.add("--initialize-at-build-time=org.slf4j.LoggerFactory")
 
-            with(buildArgs) {
-                add("--initialize-at-build-time=ch.qos.logback")
-                add("--initialize-at-build-time=io.ktor,kotlin,kotlinx.serialization")
-                add("--initialize-at-build-time=org.slf4j.LoggerFactory")
-                add("--initialize-at-build-time=ch.qos.logback.classic.Logger")
 
-                add("--initialize-at-run-time=io.netty.handler.ssl.BouncyCastleAlpnSslUtils")
-                add("--initialize-at-run-time=io.netty.channel.epoll.Epoll")
-                add("--initialize-at-run-time=io.netty.channel.epoll.Native")
-                add("--initialize-at-run-time=io.netty.channel.epoll.EpollEventLoop")
-                add("--initialize-at-run-time=io.netty.channel.epoll.EpollEventArray")
-                add("--initialize-at-run-time=io.netty.channel.DefaultFileRegion")
-                add("--initialize-at-run-time=io.netty.channel.kqueue.KQueueEventArray")
-                add("--initialize-at-run-time=io.netty.channel.kqueue.KQueueEventLoop")
-                add("--initialize-at-run-time=io.netty.channel.kqueue.KQueue")
-                add("--initialize-at-run-time=io.netty.channel.kqueue.Native")
-                add("--initialize-at-run-time=io.netty.channel.unix.Errors")
-                add("--initialize-at-run-time=io.netty.channel.unix.IovArray")
-                add("--initialize-at-run-time=io.netty.channel.unix.Limits")
-                add("--initialize-at-run-time=io.netty.util.internal.logging.Log4JLogger")
+            buildArgs.add("-H:+InstallExitHandlers")
+            buildArgs.add("-H:+ReportUnsupportedElementsAtRuntime")
+            buildArgs.add("-H:+ReportExceptionStackTraces")
 
-                add("-H:+UnlockExperimentalVMOptions")
-                add("-H:+InstallExitHandlers")
-                add("-H:+ReportUnsupportedElementsAtRuntime")
-                add("-H:+ReportExceptionStackTraces")
-                add("-H:+BuildOutputColorful")
-            }
             imageName.set("graalvm-server")
         }
     }
 }
+//
+//tasks {
+//    named<ShadowJar>("shadowJar") {
+//        mergeServiceFiles()
+//        archiveBaseName.set("${project.name}-all")
+//    }
+//}
